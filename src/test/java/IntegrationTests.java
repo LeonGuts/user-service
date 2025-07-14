@@ -26,7 +26,9 @@ public class IntegrationTests {
 
     @BeforeAll
     static void setup() {
-
+        if (!cont.isRunning()) {
+            cont.start();
+        }
         //Настройка хибера чтобы работал с testcontainers
         System.setProperty("hibernate.connection.url", cont.getJdbcUrl());
         System.setProperty("hibernate.connection.username", cont.getUsername());
@@ -34,6 +36,15 @@ public class IntegrationTests {
 
         userDao = new UserDaoImpl();
     }
+
+    @BeforeEach
+    void init() {
+        try (var session = HibernateUtil.getSessionFactory().openSession()) {
+            var transaction = session.beginTransaction();
+            session.createMutationQuery("DELETE FROM User").executeUpdate();
+            transaction.commit();
+        }
+     }
 
     @Test
     @Order(1)
